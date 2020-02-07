@@ -1,0 +1,21 @@
+name: Publish Package To NPM
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["10", "8"]
+    # This job runs on Linux
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install Deps
+        run: yarn
+      - name: Build
+        run: yarn build
