@@ -67,21 +67,3 @@ export const getTasks = async (
   }
   return getArray(items);
 };
-
-/**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
- * @param {Object} credentials The authorization client credentials.
- */
-export async function authorize(credentials) {
-  const { client_secret, client_id, redirect_uris } = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(
-    client_id,
-    client_secret,
-    redirect_uris[0]
-  );
-  // Check if we have previously stored a token.
-  const buffer = await readFile(TOKEN_PATH);
-  oAuth2Client.setCredentials(JSON.parse(buffer.toString()));
-  return oAuth2Client;
-}

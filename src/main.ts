@@ -58,9 +58,7 @@ const { argv } = yargs
   const [command] = argv._;
 
   if (command === "init") {
-    const fileContents = (
-      await promisify(fs.readFile)(path.join(__dirname, "template.csv"))
-    ).toString();
+    const fileContents = "Name,Date,List,Notes,Hide";
     await promisify(fs.writeFile)(
       path.join(process.cwd(), DEFAULT_CSV),
       fileContents

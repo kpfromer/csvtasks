@@ -1,0 +1,44 @@
+import fs from "fs";
+import csv from "csv-parser";
+import chrono from "chrono-node";
+
+const parseCsv = <T>(file: string): Promise<T[]> =>
+  new Promise((resolve, reject) => {
+    const results: T[] = [];
+    fs.createReadStream(file)
+      .pipe(
+        csv({
+          mapHeaders: ({ header, index }) => header.toLowerCase()
+        })
+      )
+      .on("data", (data: T) => results.push(data))
+      .on("end", () => resolve(results))
+      .on("error", error => reject(error));
+  });
+
+export const parse = async (
+  file: string
+): Promise<{
+  prefix?: string;
+  name: string;
+  list: string;
+  date: Date;
+  notes?: string;
+}[]> => {
+  const results = await parseCsv<{
+    prefix?: string;
+    name: string;
+    list: string;
+    date: string;
+    hide?: string;
+  }>(file);
+  return results
+    .filter(
+      row =>
+        !!row.name && (!("hide" in row) || ("hide" in row && row.hide! !== "#"))
+    ) // todo: hide
+    .map(row => ({
+      ...row,
+      date: chrono.parseDate(row.date)
+    }));
+};

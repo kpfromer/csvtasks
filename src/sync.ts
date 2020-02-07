@@ -1,21 +1,11 @@
-import path from "path";
 import { google } from "googleapis";
 import { parse } from "./csv";
 import ora from "ora";
-import {
-  getTaskLists,
-  getTasks,
-  createTaskList,
-  readFile,
-  authorize
-} from "./tasks";
+import { getTaskLists, getTasks, createTaskList } from "./tasks";
 import { OAuth2Client } from "google-auth-library";
 
 export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
   const spinner = ora("Authorizing with Google.").start();
-  // const content = await readFile(path.join(__dirname, "credentials.json"));
-  // Authorize a client with credentials, then call the Google Tasks API.
-  // const auth = await authorize(JSON.parse(content.toString()));
   const service = google.tasks({ version: "v1", auth: oauth2Client });
   spinner.succeed("Authorized with Google.");
 
