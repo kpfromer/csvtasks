@@ -1,0 +1,8 @@
+src/
+.gitignore
+gulpfile.js
+tsconfig.json
+.eslintrc.json
+.lintstagedrc
+.prettierignore
+.prettierrc.json
