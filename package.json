@@ -4,6 +4,10 @@
   "description": "A cli to sync a spreedsheet with google tasks",
   "main": "lib/main.js",
   "author": "Kyle Pfromer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kpfromer/csvtasks.git"
+  },
   "license": "MIT",
   "keywords": [
     "google",
