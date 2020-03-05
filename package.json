@@ -1,6 +1,6 @@
 {
   "name": "csvtasks",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A cli to sync a spreedsheet with google tasks",
   "main": "lib/main.js",
   "author": "Kyle Pfromer",
@@ -15,7 +15,9 @@
     "csv",
     "spreadsheet",
     "sync",
-    "CLI"
+    "CLI",
+    "calendar",
+    "upload"
   ],
   "bin": {
     "csvtasks": "./lib/main.js"
