@@ -1,5 +1,7 @@
 # csvtasks
 
+[![npm version](https://badge.fury.io/js/csvtasks.svg)](https://badge.fury.io/js/csvtasks)
+
 ## Description
 
 A CLI tool to sync and create todo items using a csv spreadsheet files with google tasks.
