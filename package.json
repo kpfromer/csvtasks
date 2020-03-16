@@ -1,6 +1,6 @@
 {
   "name": "csvtasks",
-  "version": "0.0.3",
+  "version": "0.0.0-development",
   "description": "A cli to sync a spreedsheet with google tasks",
   "main": "lib/main.js",
   "author": "Kyle Pfromer",
@@ -39,9 +39,13 @@
     "start": "ts-node src/main.ts",
     "build": "gulp",
     "lint": "eslint src/**/* --fix",
-    "format": "prettier --write **/**.{ts,js,md,json}"
+    "format": "prettier --write **/**.{ts,js,md,json}",
+    "semantic-release": "semantic-release"
   },
   "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@semantic-release/changelog": "^5.0.0",
     "@types/clear": "^0.1.0",
     "@types/clui": "^0.3.0",
     "@types/configstore": "^4.0.0",
@@ -51,15 +55,31 @@
     "@types/yargs": "^15.0.3",
     "@typescript-eslint/eslint-plugin": "^2.19.0",
     "@typescript-eslint/parser": "^2.19.0",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "^3.1.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.0",
     "eslint-plugin-prettier": "^3.1.2",
     "gulp": "^4.0.2",
     "gulp-typescript": "^6.0.0-alpha.1",
-    "husky": "^4.2.1",
+    "husky": "^4.2.3",
     "lint-staged": "^10.0.7",
     "prettier": "^1.19.1",
+    "pretty-quick": "^2.0.1",
+    "semantic-release": "^17.0.4",
     "ts-node": "^8.6.1",
     "typescript": "^3.7.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged",
+      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
   }
 }
