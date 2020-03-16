@@ -37,6 +37,7 @@
   },
   "scripts": {
     "start": "ts-node src/main.ts",
+    "test": "echo 'No tests yet'",
     "build": "gulp",
     "lint": "eslint src/**/* --fix",
     "format": "prettier --write **/**.{ts,js,md,json}",
