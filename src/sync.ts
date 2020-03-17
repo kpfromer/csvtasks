@@ -1,25 +1,25 @@
-import { google } from "googleapis";
-import { parse } from "./csv";
-import ora from "ora";
-import { getTaskLists, getTasks, createTaskList } from "./tasks";
-import { OAuth2Client } from "google-auth-library";
+import { google } from 'googleapis';
+import { parse } from './csv';
+import ora from 'ora';
+import { getTaskLists, getTasks, createTaskList } from './tasks';
+import { OAuth2Client } from 'google-auth-library';
 
 export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
-  const spinner = ora("Authorizing with Google.").start();
-  const service = google.tasks({ version: "v1", auth: oauth2Client });
-  spinner.succeed("Authorized with Google.");
+  const spinner = ora('Authorizing with Google.').start();
+  const service = google.tasks({ version: 'v1', auth: oauth2Client });
+  spinner.succeed('Authorized with Google.');
 
-  spinner.start("Loading task lists.");
+  spinner.start('Loading task lists.');
 
   const lists = await getTaskLists(service);
   spinner.succeed(`Loaded ${lists.length} task lists.`);
-  spinner.start("Loading task data");
+  spinner.start('Loading task data');
   const data = await parse(csvPath);
   spinner.succeed(`Got ${data.length} tasks to create.`);
   const listIds = new Map<string, string>();
   const tasks = new Map<string, Set<string>>();
 
-  for (let list of lists) {
+  for (const list of lists) {
     spinner.start(`Loading existing tasks for "${list.title!}" list.`);
     const existing = await getTasks(service, list.id!);
     spinner.succeed(
@@ -27,7 +27,7 @@ export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
     );
 
     const existingSet = new Set<string>();
-    for (let task of existing) {
+    for (const task of existing) {
       existingSet.add(task.title!);
     }
 
@@ -35,7 +35,7 @@ export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
     tasks.set(list.id!, existingSet);
   }
 
-  for (let task of data) {
+  for (const task of data) {
     let listId;
     if (!listIds.has(task.list)) {
       spinner.info(`"${task.list}" list does not exist, creating it.`);
@@ -48,9 +48,7 @@ export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
     }
 
     const title =
-      "prefix" in task && !!task.prefix
-        ? `${task.prefix} - ${task.name}`
-        : task.name;
+      'prefix' in task && !!task.prefix ? `${task.prefix} - ${task.name}` : task.name;
     spinner.start(`Creating "${title}" in "${task.list}" list.`);
     if (tasks.has(listId) && tasks.get(listId)!.has(title)) {
       spinner.info(
@@ -68,6 +66,6 @@ export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
       spinner.succeed(`Created "${title}" in "${task.list}" list.`);
     }
   }
-  spinner.succeed("Done creating tasks.");
+  spinner.succeed('Done creating tasks.');
   spinner.stop();
 }

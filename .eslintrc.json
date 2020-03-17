@@ -6,5 +6,12 @@
     "plugin:prettier/recommended"
   ],
   "parserOptions": { "ecmaVersion": 2018, "sourceType": "module" },
-  "ignorePatterns": ["gulpfile.js"]
+  "ignorePatterns": ["gulpfile.js"],
+  "rules": {
+    "camelcase": "off",
+    "@typescript-eslint/camelcase": [
+      "error",
+      { "allow": ["tasks_v1", "access_type", "login_hint"] }
+    ]
+  }
 }

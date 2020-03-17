@@ -1,5 +1,5 @@
-import { OAuth2Client, Credentials } from "google-auth-library";
-import { config } from "./main";
+import { OAuth2Client, Credentials } from 'google-auth-library';
+import { config } from './main';
 
 export type UserPrompt = (message: string) => Promise<string>;
 
@@ -29,7 +29,7 @@ export interface AuthOptions {
  *   @returns {Promise.<String>} Promise yielding the authorization code
  */
 export default class UserAuthorizer {
-  private redirectUrl = "urn:ietf:wg:oauth:2.0:oob";
+  private redirectUrl = 'urn:ietf:wg:oauth:2.0:oob';
   private clientId: string;
   private clientSecret: string;
   private prompt: UserPrompt;
@@ -69,14 +69,14 @@ export default class UserAuthorizer {
       this.redirectUrl
     );
 
-    oauth2Client.on("tokens", (tokens: Credentials) => {
+    oauth2Client.on('tokens', (tokens: Credentials) => {
       if (tokens.refresh_token) {
         // debug("Saving refresh token");
-        config.set("tokens", tokens);
+        config.set('tokens', tokens);
       }
     });
 
-    let tokens = config.get("tokens");
+    const tokens = config.get('tokens');
 
     if (tokens) {
       // debug("User previously authorized, refreshing");
@@ -86,13 +86,13 @@ export default class UserAuthorizer {
     }
 
     const authUrl = oauth2Client.generateAuthUrl({
-      access_type: "offline",
+      access_type: 'offline',
       scope: scopes,
       login_hint: user
     });
 
-    let code = await this.prompt(authUrl);
-    let tokenResponse = await oauth2Client.getToken(code);
+    const code = await this.prompt(authUrl);
+    const tokenResponse = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokenResponse.tokens);
     return oauth2Client;
   }

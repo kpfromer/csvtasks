@@ -1,6 +1,6 @@
-import fs from "fs";
-import csv from "csv-parser";
-import chrono from "chrono-node";
+import fs from 'fs';
+import csv from 'csv-parser';
+import chrono from 'chrono-node';
 
 const parseCsv = <T>(file: string): Promise<T[]> =>
   new Promise((resolve, reject) => {
@@ -11,9 +11,9 @@ const parseCsv = <T>(file: string): Promise<T[]> =>
           mapHeaders: ({ header, index }) => header.toLowerCase()
         })
       )
-      .on("data", (data: T) => results.push(data))
-      .on("end", () => resolve(results))
-      .on("error", error => reject(error));
+      .on('data', (data: T) => results.push(data))
+      .on('end', () => resolve(results))
+      .on('error', error => reject(error));
   });
 
 export const parse = async (
@@ -34,8 +34,7 @@ export const parse = async (
   }>(file);
   return results
     .filter(
-      row =>
-        !!row.name && (!("hide" in row) || ("hide" in row && row.hide! !== "#"))
+      row => !!row.name && (!('hide' in row) || ('hide' in row && row.hide! !== '#'))
     ) // todo: hide
     .map(row => ({
       ...row,
