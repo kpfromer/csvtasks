@@ -53,7 +53,7 @@
     "@types/figlet": "1.2.0",
     "@types/node": "13.9.5",
     "@types/opener": "1.4.0",
-    "@types/yargs": "15.0.3",
+    "@types/yargs": "15.0.4",
     "@typescript-eslint/eslint-plugin": "2.25.0",
     "@typescript-eslint/parser": "2.25.0",
     "commitizen": "4.0.3",
