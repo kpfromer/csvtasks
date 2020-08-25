@@ -1,0 +1,22 @@
+name: Publish
+
+on:
+    release:
+      types: [published]
+  
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v1
+        - uses: actions/setup-node@v1
+          with:
+            node-version: 10
+            registry-url: https://registry.npmjs.org/
+        - run: yarn install
+        - run: yarn build
+        - name: Semantic Release
+          uses: cycjimmy/semantic-release-action@v2
+          env:
+              GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+              NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
