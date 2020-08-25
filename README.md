@@ -14,6 +14,8 @@ A CLI tool to sync and create todo items using a csv spreadsheet files with goog
 `npm install -g csvtasks`
 `yarn global add csvtasks`
 
+**Make sure you have all the dependencies that [node-keytar](https://github.com/atom/node-keytar#installing) requires!**
+
 ## Basic usage
 
 ### Init
