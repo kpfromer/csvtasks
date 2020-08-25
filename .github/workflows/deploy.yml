@@ -16,6 +16,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: yarn install
       - run: yarn build
+      - run: npm whoami --registry https://registry.npmjs.org/
       - name: Release
         run: npx semantic-release
         env:
