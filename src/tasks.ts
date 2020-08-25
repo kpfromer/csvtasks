@@ -10,19 +10,19 @@ export const readFile = (file: string): Promise<Buffer> =>
   );
 export const writeFile = (file: string, data: string): Promise<void> =>
   new Promise((resolve, reject) =>
-    fs.writeFile(file, data, error => {
+    fs.writeFile(file, data, (error) => {
       if (error) return reject(error);
       resolve();
     })
   );
 
 export const question = (ask: string): Promise<string> =>
-  new Promise(resolve => {
+  new Promise((resolve) => {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     });
-    rl.question(ask, code => {
+    rl.question(ask, (code) => {
       rl.close();
       resolve(code);
     });
@@ -44,7 +44,7 @@ export const createTaskList = async (
 export const getTaskLists = async (
   service: tasks_v1.Tasks
 ): Promise<tasks_v1.Schema$TaskList[]> => {
-  const { items } = (await service.tasklists.list({ maxResults: '100' })).data;
+  const { items } = (await service.tasklists.list({ maxResults: 100 })).data;
   return items === undefined ? [] : items;
 };
 
@@ -53,11 +53,18 @@ export const getTasks = async (
   tasklistId: string
 ): Promise<tasks_v1.Schema$Task[]> => {
   let { items, nextPageToken } = (
-    await service.tasks.list({ maxResults: '100', tasklist: tasklistId })
+    await service.tasks.list({
+      maxResults: 100,
+      showCompleted: true,
+      showHidden: true,
+      tasklist: tasklistId
+    })
   ).data;
   while (nextPageToken !== undefined) {
     const { data } = await service.tasks.list({
-      maxResults: '100',
+      maxResults: 100,
+      showCompleted: true,
+      showHidden: true,
       tasklist: tasklistId
     });
     items = [...getArray(items), ...getArray(data.items)];

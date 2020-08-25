@@ -3,8 +3,20 @@ import { parse } from './csv';
 import ora from 'ora';
 import { getTaskLists, getTasks, createTaskList } from './tasks';
 import { OAuth2Client } from 'google-auth-library';
+import path from 'path';
 
-export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
+interface SyncOptions {
+  dryrun: boolean;
+}
+
+// TODO:
+// function readFile(): Promise<
+
+export async function syncData(
+  csvPath: string,
+  oauth2Client: OAuth2Client,
+  options: SyncOptions
+): Promise<void> {
   const spinner = ora('Authorizing with Google.').start();
   const service = google.tasks({ version: 'v1', auth: oauth2Client });
   spinner.succeed('Authorized with Google.');
@@ -14,8 +26,11 @@ export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
   const lists = await getTaskLists(service);
   spinner.succeed(`Loaded ${lists.length} task lists.`);
   spinner.start('Loading task data');
-  const data = await parse(csvPath);
+  const data = await parse(path.join(process.cwd(), csvPath));
+
   spinner.succeed(`Got ${data.length} tasks to create.`);
+  if (data.length === 0) return;
+
   const listIds = new Map<string, string>();
   const tasks = new Map<string, Set<string>>();
 
@@ -55,14 +70,16 @@ export async function syncData(csvPath: string, oauth2Client: OAuth2Client) {
         `Skipping creating "${title}" in "${task.list}" list, since it already exists.`
       );
     } else {
-      await service.tasks.insert({
-        tasklist: listId,
-        requestBody: {
-          title,
-          due: task.date.toISOString(),
-          notes: task.notes
-        }
-      });
+      if (!options.dryrun) {
+        await service.tasks.insert({
+          tasklist: listId,
+          requestBody: {
+            title,
+            due: task.date.toISOString(),
+            notes: task.notes
+          }
+        });
+      }
       spinner.succeed(`Created "${title}" in "${task.list}" list.`);
     }
   }

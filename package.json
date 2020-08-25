@@ -23,7 +23,7 @@
     "csvtasks": "./lib/main.js"
   },
   "dependencies": {
-    "chrono-node": "^2.0.0",
+    "chrono-node": "^2.1.8",
     "clear": "^0.1.0",
     "clui": "^0.3.6",
     "configstore": "^5.0.0",

@@ -17,12 +17,12 @@ export const config = new ConfigStore('googletasks-sync', {});
 function prompt(url): Promise<string> {
   console.log('Authorize this app in your browser.');
   opener(url);
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     });
-    rl.question('Enter the code here: ', function(code) {
+    rl.question('Enter the code here: ', function (code) {
       rl.close();
       code = code.trim();
       if (code.length > 0) {
@@ -44,26 +44,32 @@ function authorizeUser() {
   return auth.getUserCredentials('username', SCOPES); // TODO: change username to be custom for multiple users
 }
 
-const { argv } = yargs
-  .command('init', 'create a sample csv file')
-  .command('sync [file]', 'syncs a csv file with google tasks', {
-    file: {
-      alias: 'f',
-      default: DEFAULT_CSV
-    }
-  })
-  .command('clean', 'remove google token');
-
-(async function() {
-  const [command] = argv._;
-
-  if (command === 'init') {
+yargs
+  .command('init', 'Creates a sample csv file.', {}, async () => {
     const fileContents = 'Name,Date,List,Notes,Hide';
     await promisify(fs.writeFile)(path.join(process.cwd(), DEFAULT_CSV), fileContents);
-  } else if (command === 'sync') {
-    const auth = await authorizeUser();
-    await syncData(argv.file as string, auth);
-  } else if (command === 'clean') {
+  })
+  .command(
+    'sync [file]',
+    'Syncs a csv file with google tasks.',
+    {
+      file: {
+        alias: 'f',
+        type: 'string',
+        default: DEFAULT_CSV
+      },
+      dryrun: {
+        type: 'boolean',
+        default: false
+      }
+    },
+    async ({ file, dryrun }) => {
+      const auth = await authorizeUser();
+      await syncData(file, auth, { dryrun });
+    }
+  )
+  .command('clean', 'Removes google token (aka logouts).', {}, () => {
     config.delete('tokens');
-  }
-})();
+  })
+  .alias('h', 'help')
+  .scriptName('csvtasks').argv;
