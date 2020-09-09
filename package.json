@@ -33,7 +33,7 @@
     "googleapis": "52",
     "opener": "^1.5.1",
     "ora": "^4.0.3",
-    "yargs": "^15.1.0"
+    "yargs": "^16.0.0"
   },
   "scripts": {
     "start": "ts-node src/main.ts",
