@@ -30,7 +30,7 @@
     "csv-parser": "^2.3.2",
     "figlet": "^1.2.4",
     "google-auth-library": "^6.0.0",
-    "googleapis": "52",
+    "googleapis": "60",
     "opener": "^1.5.1",
     "ora": "^4.0.3",
     "yargs": "^15.1.0"
