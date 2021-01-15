@@ -14,8 +14,8 @@ const DEFAULT_CSV = 'googletasks.csv';
 
 export const config = new ConfigStore('googletasks-sync', {});
 
-function prompt(url): Promise<string> {
-  console.log('Authorize this app in your browser.');
+function prompt(url: string): Promise<string> {
+  console.log(`Authorize this app in your browser.\nURL: ${url}`);
   opener(url);
   return new Promise(function (resolve, reject) {
     const rl = readline.createInterface({
