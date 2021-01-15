@@ -60,7 +60,7 @@ export const getTasks = async (
       tasklist: tasklistId
     })
   ).data;
-  while (nextPageToken !== undefined) {
+  while (!!nextPageToken) {
     const { data } = await service.tasks.list({
       maxResults: 100,
       showCompleted: true,

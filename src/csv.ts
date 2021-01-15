@@ -35,11 +35,17 @@ export const parse = async (
     hide?: string;
   }>(file);
   return results
-    .filter(
-      (row) => !!row.name && (!('hide' in row) || ('hide' in row && row.hide! !== '#'))
-    ) // todo: hide
-    .map((row) => ({
-      ...row,
-      date: parseDate(row.date)
-    }));
+    .filter((row) => !!row.name && (!('hide' in row) || ('hide' in row && !row.hide)))
+    .map((row) => {
+      const parsedDate = parseDate(row.date);
+      if (!(parsedDate instanceof Date))
+        throw new TypeError(
+          `Invalid date "${row.date}" for assignment with name "${row.name}"`
+        );
+
+      return {
+        ...row,
+        date: parsedDate
+      };
+    });
 };
