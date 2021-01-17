@@ -52,23 +52,22 @@ export const getTasks = async (
   service: tasks_v1.Tasks,
   tasklistId: string
 ): Promise<tasks_v1.Schema$Task[]> => {
-  let { items, nextPageToken } = (
-    await service.tasks.list({
-      maxResults: 100,
-      showCompleted: true,
-      showHidden: true,
-      tasklist: tasklistId
-    })
-  ).data;
-  while (!!nextPageToken) {
-    const { data } = await service.tasks.list({
-      maxResults: 100,
-      showCompleted: true,
-      showHidden: true,
-      tasklist: tasklistId
-    });
-    items = [...getArray(items), ...getArray(data.items)];
-    nextPageToken = data.nextPageToken;
-  }
-  return getArray(items);
+  let items: tasks_v1.Schema$Task[] = [];
+  let nextPageToken: string | undefined | null = undefined;
+
+  do {
+    const { items: newItems, nextPageToken: newToken } = (
+      await service.tasks.list({
+        maxResults: 100,
+        showCompleted: true,
+        showHidden: true,
+        tasklist: tasklistId,
+        ...(nextPageToken ? { pageToken: nextPageToken } : {})
+      })
+    ).data;
+    nextPageToken = newToken;
+    items = [...items, ...getArray(newItems)];
+  } while (!!nextPageToken);
+
+  return items;
 };
