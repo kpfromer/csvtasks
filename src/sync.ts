@@ -1,13 +1,119 @@
-import { google } from 'googleapis';
+import { google, tasks_v1 } from 'googleapis';
 import { parse } from './csv';
 import ora from 'ora';
 import { getTaskLists, getTasks, createTaskList } from './tasks';
 import { OAuth2Client } from 'google-auth-library';
 import path from 'path';
-import { TaskList } from './types';
+import { Task, TaskList } from './types';
 
 interface SyncOptions {
   dryrun: boolean;
+}
+
+class TaskService {
+  private listTitleToTask = new Map<string, TaskList>();
+  // No not found then list has not loaded tasks from api
+  private listTitleToTasknames = new Map<string, Set<string>>();
+
+  constructor(
+    private readonly service: tasks_v1.Tasks,
+    public readonly spinner?: ora.Ora
+  ) {}
+
+  public async loadLists(): Promise<void> {
+    this.spinner?.start('Loading task lists.');
+    const lists = await getTaskLists(this.service);
+
+    lists.forEach((list) => this.listTitleToTask.set(list.title!, list));
+
+    this.spinner?.succeed(`Loaded ${lists.length} task lists.`);
+  }
+
+  public async loadTasks(listTitle: string): Promise<Set<string>> {
+    const list = this.listTitleToTask.get(listTitle);
+    if (!list) throw new TypeError('List not found.');
+
+    this.spinner?.start(`Loading existing tasks for "${list.title!}" list.`);
+    const existing = await getTasks(this.service, list.id!);
+    this.spinner?.succeed(
+      `Loaded ${existing.length} existing tasks for "${list.title!}" list.`
+    );
+
+    const taskTitleSet = new Set<string>();
+    for (const task of existing) {
+      taskTitleSet.add(task.title!);
+    }
+
+    this.listTitleToTasknames.set(listTitle, taskTitleSet);
+
+    return taskTitleSet;
+  }
+
+  public async getList(
+    listTitle: string
+  ): Promise<{ list: TaskList; taskSet: Set<string> } | undefined> {
+    const list = this.listTitleToTask.get(listTitle);
+    if (!list) return undefined;
+
+    const taskTitleSet = !this.listTitleToTasknames.has(listTitle)
+      ? await this.loadTasks(listTitle)
+      : this.listTitleToTasknames.get(listTitle)!;
+
+    return { list, taskSet: taskTitleSet };
+  }
+
+  public async createList(listTitle: string): Promise<TaskList> {
+    this.spinner?.info(`"${listTitle}" list does not exist, creating it.`);
+    // this.spinner?.start(`Creating "${listTitle}" list`);
+    const list = await createTaskList(this.service, listTitle);
+
+    this.listTitleToTask.set(listTitle, list);
+    this.listTitleToTasknames.set(listTitle, new Set());
+
+    this.spinner?.succeed(`Created "${listTitle}" list.`);
+
+    return list;
+  }
+
+  public async createTask(
+    listTitle: string,
+    body: Pick<Required<Task>, 'title' | 'due' | 'notes'>,
+    options: {
+      // Creates task if already found by title
+      recreate?: boolean;
+      // Creates a list and adds task to the list if list title is not found
+      upsertList?: boolean;
+    } = {}
+  ): Promise<void> {
+    const { recreate = false, upsertList = true } = options;
+
+    let list = this.listTitleToTask.get(listTitle);
+    if (!list) {
+      if (!upsertList) throw new TypeError(`List with title "${listTitle}" not found.`);
+      list = await this.createList(listTitle);
+    }
+
+    this.spinner?.start(`Creating "${body.title}" in "${list.title}" list.`);
+    if (
+      recreate ||
+      !(
+        // Get existing tasks and check if task title already exists
+        (
+          this.listTitleToTasknames.get(listTitle) ?? (await this.loadTasks(listTitle))
+        ).has(body.title!)
+      )
+    ) {
+      await this.service.tasks.insert({
+        tasklist: list.id!,
+        requestBody: body
+      });
+      this.spinner?.succeed(`Created "${body.title}" in "${list.title}" list.`);
+    } else {
+      this.spinner?.info(
+        `Skipping creating "${body.title}" in "${list.title}" list, since it already exists.`
+      );
+    }
+  }
 }
 
 export async function syncData(
@@ -19,88 +125,24 @@ export async function syncData(
   const service = google.tasks({ version: 'v1', auth: oauth2Client });
   spinner.succeed('Authorized with Google.');
 
-  spinner.start('Loading task lists.');
-
-  const lists = await getTaskLists(service);
-  spinner.succeed(`Loaded ${lists.length} task lists.`);
   spinner.start('Loading task data');
   const data = await parse(path.join(process.cwd(), csvPath));
 
   spinner.succeed(`Got ${data.length} tasks to create.`);
   if (data.length === 0) return;
 
-  // list name/ list title -> TaskList
-  const listNameToList = new Map<string, { list: TaskList; loadedTasks: boolean }>(
-    lists.map((item) => [item.title!, { list: item, loadedTasks: false }])
-  );
-  // List -> set of task names
-  const tasks = new Map<string, Set<string>>();
+  const taskService = new TaskService(service, spinner);
 
-  const loadTasks = async (listName: string): Promise<TaskList> => {
-    const value = listNameToList.get(listName);
-    if (!value) throw new TypeError('List not found.');
-
-    const { list } = value;
-
-    spinner.start(`Loading existing tasks for "${list.title!}" list.`);
-    const existing = await getTasks(service, list.id!);
-    spinner.succeed(
-      `Loaded ${existing.length} existing tasks for "${list.title!}" list.`
-    );
-
-    const existingSet = new Set<string>();
-    for (const task of existing) {
-      existingSet.add(task.title!);
-    }
-
-    listNameToList.set(listName, { list, loadedTasks: true });
-    tasks.set(list.id!, existingSet);
-
-    return list;
-  };
+  await taskService.loadLists();
 
   for (const task of data) {
-    let listId;
+    const body = {
+      title: task.name,
+      due: task.date.toISOString(),
+      notes: task.notes ?? ''
+    };
 
-    // Create list if not found in api
-    if (!listNameToList.has(task.list)) {
-      spinner.info(`"${task.list}" list does not exist, creating it.`);
-      spinner.start(`Creating "${task.list}" list`);
-      const list = await createTaskList(service, task.list);
-      listId = list.id;
-      tasks.set(listId, new Set());
-      listNameToList.set(task.list, { list, loadedTasks: true });
-      spinner.succeed(`Created "${task.list}" list.`);
-    } else {
-      // check if loaded if not load in tasks
-      const { list, loadedTasks } = listNameToList.get(task.list)!;
-      if (!loadedTasks) {
-        listId = (await loadTasks(task.list)).id;
-      } else {
-        listId = list.id;
-      }
-    }
-
-    const title =
-      'prefix' in task && !!task.prefix ? `${task.prefix} - ${task.name}` : task.name;
-    spinner.start(`Creating "${title}" in "${task.list}" list.`);
-    if (tasks.has(listId) && tasks.get(listId)!.has(title)) {
-      spinner.info(
-        `Skipping creating "${title}" in "${task.list}" list, since it already exists.`
-      );
-    } else {
-      if (!options.dryrun) {
-        await service.tasks.insert({
-          tasklist: listId,
-          requestBody: {
-            title,
-            due: task.date.toISOString(),
-            notes: task.notes
-          }
-        });
-      }
-      spinner.succeed(`Created "${title}" in "${task.list}" list.`);
-    }
+    await taskService.createTask(task.list, body);
   }
   spinner.succeed('Done creating tasks.');
   spinner.stop();
