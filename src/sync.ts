@@ -4,13 +4,11 @@ import ora from 'ora';
 import { getTaskLists, getTasks, createTaskList } from './tasks';
 import { OAuth2Client } from 'google-auth-library';
 import path from 'path';
+import { TaskList } from './types';
 
 interface SyncOptions {
   dryrun: boolean;
 }
-
-// TODO:
-// function readFile(): Promise<
 
 export async function syncData(
   csvPath: string,
@@ -31,10 +29,19 @@ export async function syncData(
   spinner.succeed(`Got ${data.length} tasks to create.`);
   if (data.length === 0) return;
 
-  const listIds = new Map<string, string>();
+  // list name/ list title -> TaskList
+  const listNameToList = new Map<string, { list: TaskList; loadedTasks: boolean }>(
+    lists.map((item) => [item.title!, { list: item, loadedTasks: false }])
+  );
+  // List -> set of task names
   const tasks = new Map<string, Set<string>>();
 
-  for (const list of lists) {
+  const loadTasks = async (listName: string): Promise<TaskList> => {
+    const value = listNameToList.get(listName);
+    if (!value) throw new TypeError('List not found.');
+
+    const { list } = value;
+
     spinner.start(`Loading existing tasks for "${list.title!}" list.`);
     const existing = await getTasks(service, list.id!);
     spinner.succeed(
@@ -46,20 +53,32 @@ export async function syncData(
       existingSet.add(task.title!);
     }
 
-    listIds.set(list.title!, list.id!);
+    listNameToList.set(listName, { list, loadedTasks: true });
     tasks.set(list.id!, existingSet);
-  }
+
+    return list;
+  };
 
   for (const task of data) {
     let listId;
-    if (!listIds.has(task.list)) {
+
+    // Create list if not found in api
+    if (!listNameToList.has(task.list)) {
       spinner.info(`"${task.list}" list does not exist, creating it.`);
       spinner.start(`Creating "${task.list}" list`);
-      listId = await createTaskList(service, task.list);
-      listIds.set(task.list, listId);
+      const list = await createTaskList(service, task.list);
+      listId = list.id;
+      tasks.set(listId, new Set());
+      listNameToList.set(task.list, { list, loadedTasks: true });
       spinner.succeed(`Created "${task.list}" list.`);
     } else {
-      listId = listIds.get(task.list);
+      // check if loaded if not load in tasks
+      const { list, loadedTasks } = listNameToList.get(task.list)!;
+      if (!loadedTasks) {
+        listId = (await loadTasks(task.list)).id;
+      } else {
+        listId = list.id;
+      }
     }
 
     const title =

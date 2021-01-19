@@ -1,6 +1,7 @@
 import fs from 'fs';
 import readline from 'readline';
 import { tasks_v1 } from 'googleapis';
+import { TaskList } from './types';
 
 const getArray = <T>(value: T[] | undefined): T[] => (!!value ? value : []);
 
@@ -31,14 +32,13 @@ export const question = (ask: string): Promise<string> =>
 export const createTaskList = async (
   service: tasks_v1.Tasks,
   name: string
-): Promise<string> => {
-  const { id } = (
+): Promise<TaskList> => {
+  const list = (
     await service.tasklists.insert({
       requestBody: { title: name }
     })
   ).data;
-  if (!id) throw new Error('Failed to create task list.');
-  return id;
+  return list;
 };
 
 export const getTaskLists = async (
