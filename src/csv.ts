@@ -1,6 +1,7 @@
 import fs from 'fs';
 import csv from 'csv-parser';
 import { parseDate } from 'chrono-node';
+import { WantedTask } from './types';
 
 const parseCsv = <T>(file: string): Promise<T[]> =>
   new Promise((resolve, reject) => {
@@ -16,22 +17,12 @@ const parseCsv = <T>(file: string): Promise<T[]> =>
       .on('error', (error) => reject(error));
   });
 
-export const parse = async (
-  file: string
-): Promise<
-  {
-    prefix?: string;
-    name: string;
-    list: string;
-    date: Date;
-    notes?: string;
-  }[]
-> => {
+export const parse = async (file: string): Promise<WantedTask[]> => {
   const results = await parseCsv<{
-    prefix?: string;
     name: string;
     list: string;
     date: string;
+    notes: string;
     hide?: string;
   }>(file);
   return results

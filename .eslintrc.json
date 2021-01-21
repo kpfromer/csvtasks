@@ -8,7 +8,7 @@
   "parserOptions": { "ecmaVersion": 2018, "sourceType": "module" },
   "ignorePatterns": ["gulpfile.js"],
   "rules": {
-    "camelcase": ["error", { "allow": ["tasks_v1", "access_type", "login_hint"] }],
+    "camelcase": ["error", { "allow": ["tasks_v1", "sheets_v4", "access_type", "login_hint"] }],
     "@typescript-eslint/no-non-null-assertion": "off"
   }
 }

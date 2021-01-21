@@ -1,5 +1,7 @@
+import readline from 'readline';
+import opener from 'opener';
 import { OAuth2Client, Credentials } from 'google-auth-library';
-import { config } from './main';
+import { config } from '../main';
 
 export type UserPrompt = (message: string) => Promise<string>;
 
@@ -96,4 +98,39 @@ export default class UserAuthorizer {
     oauth2Client.setCredentials(tokenResponse.tokens);
     return oauth2Client;
   }
+}
+
+function prompt(url: string): Promise<string> {
+  console.log(`Authorize this app in your browser.\nURL: ${url}`);
+  opener(url);
+  return new Promise(function (resolve, reject) {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    rl.question('Enter the code here: ', function (code) {
+      rl.close();
+      code = code.trim();
+      if (code.length > 0) {
+        resolve(code);
+      } else {
+        reject(new Error('No code provided'));
+      }
+    });
+  });
+}
+
+const SCOPES = [
+  'https://www.googleapis.com/auth/tasks',
+  'https://www.googleapis.com/auth/spreadsheets.readonly'
+];
+
+export function authorizeUser() {
+  const options = {
+    clientId: '867864663032-ei2kmp7c5kp3rtridik1e7ntr9qgmcd3.apps.googleusercontent.com',
+    clientSecret: 'DvD6ORJt50uyvM008hklakV1',
+    prompt
+  };
+  const auth = new UserAuthorizer(options);
+  return auth.getUserCredentials('username', SCOPES); // TODO: change username to be custom for multiple users
 }

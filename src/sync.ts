@@ -1,10 +1,10 @@
-import { google, tasks_v1 } from 'googleapis';
+import { google, sheets_v4, tasks_v1 } from 'googleapis';
 import { parse } from './csv';
 import ora from 'ora';
-import { getTaskLists, getTasks, createTaskList } from './tasks';
+import { getTaskLists, getTasks, createTaskList } from './google';
 import { OAuth2Client } from 'google-auth-library';
 import path from 'path';
-import { Task, TaskList } from './types';
+import { CleanWantedTask, Task, TaskList } from './types';
 
 interface SyncOptions {
   dryrun: boolean;
@@ -116,17 +116,8 @@ class TaskService {
   }
 }
 
-export async function syncData(
-  csvPath: string,
-  oauth2Client: OAuth2Client,
-  options: SyncOptions
-): Promise<void> {
-  const spinner = ora('Authorizing with Google.').start();
-  const service = google.tasks({ version: 'v1', auth: oauth2Client });
-  spinner.succeed('Authorized with Google.');
-
-  spinner.start('Loading task data');
-  const data = await parse(path.join(process.cwd(), csvPath));
+export async function syncRawData(service: tasks_v1.Tasks, data: CleanWantedTask[]) {
+  const spinner = ora().start();
 
   spinner.succeed(`Got ${data.length} tasks to create.`);
   if (data.length === 0) return;
@@ -146,4 +137,15 @@ export async function syncData(
   }
   spinner.succeed('Done creating tasks.');
   spinner.stop();
+}
+
+export async function syncCsvData(
+  csvPath: string,
+  oauth2Client: OAuth2Client,
+  options: SyncOptions
+): Promise<void> {
+  const service = google.tasks({ version: 'v1', auth: oauth2Client });
+  const data = await parse(path.join(process.cwd(), csvPath));
+
+  return syncRawData(service, (data as unknown) as CleanWantedTask[]);
 }

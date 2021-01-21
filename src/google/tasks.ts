@@ -1,7 +1,7 @@
 import fs from 'fs';
 import readline from 'readline';
 import { tasks_v1 } from 'googleapis';
-import { TaskList } from './types';
+import { TaskList } from '../types';
 
 const getArray = <T>(value: T[] | undefined): T[] => (!!value ? value : []);
 
