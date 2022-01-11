@@ -36,8 +36,8 @@ function prompt(url: string): Promise<string> {
 
 function authorizeUser() {
   const options = {
-    clientId: '867864663032-ei2kmp7c5kp3rtridik1e7ntr9qgmcd3.apps.googleusercontent.com',
-    clientSecret: 'DvD6ORJt50uyvM008hklakV1',
+    clientId: '867864663032-2rra99aule2efabu5regpiu2edu1rhfu.apps.googleusercontent.com',
+    clientSecret: '9Ruz9M78kAyPATZDx0QecUt9',
     prompt
   };
   const auth = new UserAuthorizer(options);

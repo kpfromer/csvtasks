@@ -122,6 +122,8 @@ export async function syncData(
   options: SyncOptions
 ): Promise<void> {
   const spinner = ora('Authorizing with Google.').start();
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const service = google.tasks({ version: 'v1', auth: oauth2Client });
   spinner.succeed('Authorized with Google.');
 
