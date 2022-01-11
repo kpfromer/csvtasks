@@ -1,23 +1,66 @@
 name: Publish
 
 on:
+  pull_request:
   push:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Run the steps below with the following versions of Node.js
+        node-version: [12.x]
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      # Fetch the latest commit
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@646cdf48217256a3d0b80361c5a50727664284f2
         with:
-          node-version: 10
-          registry-url: https://registry.npmjs.org/
-      - run: yarn install
-      - run: yarn build
-      - name: NPM Release
-        run: npx semantic-release
+          version: 6.10.0
+
+      # Setup Node.js using the appropriate version
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install
+
+  release:
+    # Only release on push to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    # Waits for test jobs for each Node.js version to complete
+    needs: [test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@646cdf48217256a3d0b80361c5a50727664284f2
+        with:
+          version: 6.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Release
+        run: pnpx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
